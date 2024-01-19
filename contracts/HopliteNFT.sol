@@ -15,8 +15,6 @@ import "./IHopliteNFT.sol";
 
 contract HopliteNFT is Ownable, ONFT721, ERC2981, IHopliteNFT {
 
-    uint256 public constant MAX_SUPPLY = 5000;
-
     string public baseTokenURI;
 
     address public royaltyHandler;
