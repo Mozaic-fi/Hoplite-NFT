@@ -3,8 +3,6 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-// import {ERC2981} from "openzeppelin-contracts/contracts/token/common/ERC2981.sol";
-// import {IERC2981} from "openzeppelin-contracts/contracts/interfaces/IERC2981.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import "@layerzerolabs/solidity-examples/contracts/token/onft721/ONFT721.sol";
@@ -15,9 +13,7 @@ import "./IHopliteNFT.sol";
 
 contract HopliteNFT is Ownable, ONFT721, ERC2981, IHopliteNFT {
 
-    string public baseTokenURI;
-
-    address public royaltyHandler;
+    string private baseTokenURI;
 
     mapping(address => bool) public whiteList;
 
@@ -35,31 +31,26 @@ contract HopliteNFT is Ownable, ONFT721, ERC2981, IHopliteNFT {
         setBaseURI(baseURI);
         goLiveDate = _goLiveDate;
         whiteList[msg.sender] = true;
-        for(uint256 i=0; i<377; i++) {
+        for(uint256 i = 0; i < 377; i++) {
             _mint(msg.sender, i);
         }
+        whiteList[msg.sender] = false;  
     }
 
     /*//////////////////////////////////////////////////////////////
                        Error
     //////////////////////////////////////////////////////////////*/
     error NotWhiteList();
-    error TooHigh();
 
     /*//////////////////////////////////////////////////////////////
                        Events
     //////////////////////////////////////////////////////////////*/
 
-    event NewRoyalty(uint256 newRoyalty);
-
-    /*//////////////////////////////////////////////////////////////
-                       Modifiers
-    //////////////////////////////////////////////////////////////*/
-
-    modifier onlyRoyaltyHandler() {
-        require(msg.sender == royaltyHandler, "caller must be royaltyHandler.");
-        _;
-    }
+    event NewDefaultRoyalty(address receiver, uint96 newRoyalty);
+    event NewTokenRoyalty(uint256 tokenId, address receiver, uint96 newRoyalty);
+    event DeleteDefaultRoyalty();
+    event ResetTokenRoyalty(uint256 tokenId);
+    event SetBaseURI(string baseTokenURI);
 
     /*//////////////////////////////////////////////////////////////
                        Configuration
@@ -67,46 +58,53 @@ contract HopliteNFT is Ownable, ONFT721, ERC2981, IHopliteNFT {
 
     function setBaseURI(string memory baseURI) public onlyOwner {
         baseTokenURI = baseURI;
+        emit SetBaseURI(baseTokenURI);
     }
 
-    function setRoyaltyHandler(address _handler) public onlyOwner {
-        require(_handler != address(0), "Invalid handler address");
-        royaltyHandler = _handler;
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseTokenURI;
     }
 
     /*//////////////////////////////////////////////////////////////
                         Tweaks
     //////////////////////////////////////////////////////////////*/
 
-    function adjustRoyalty(uint96 newRoyalty) public onlyOwner {
+    function setDefaultRoyalty(address receiver, uint96 newRoyalty) public onlyOwner {
         require(newRoyalty <= MAX_ROYALTY, "Too high royalty");
-        require(royaltyHandler != address(0), "Set the royaltyHandler");
-        _setDefaultRoyalty(royaltyHandler, newRoyalty);
-        emit NewRoyalty(newRoyalty);
-
+        _setDefaultRoyalty(receiver, newRoyalty);
+        emit NewDefaultRoyalty(receiver, newRoyalty);
     }
 
-    function updateWhiteList(address[] memory _whiteListUsers) external onlyOwner {
+    function deleteDefaultRoyalty() public onlyOwner {
+        _deleteDefaultRoyalty();
+        emit DeleteDefaultRoyalty();
+    }
+
+    function setTokenRoyalty(uint256 tokenId, address receiver, uint96 newRoyalty) public onlyOwner {
+        require(newRoyalty <= MAX_ROYALTY, "Too high royalty");
+        _setTokenRoyalty(tokenId, receiver, newRoyalty);
+        emit NewTokenRoyalty(tokenId, receiver, newRoyalty);
+    }
+
+    function resetTokenRoyalty(uint256 tokenId) public onlyOwner {
+        _resetTokenRoyalty(tokenId);
+        emit ResetTokenRoyalty(tokenId);
+    }
+
+    function updateWhiteList(address[] memory _whiteListUsers) public onlyOwner {
         require(_whiteListUsers.length > 0, "Invalid Param");
         for(uint i=0; i<_whiteListUsers.length; i++) {
-            require(_whiteListUsers[i] != address(0), "Invalid Address");
-            unchecked {
-                whiteList[_whiteListUsers[i]] = true;
-            }
+            require(_whiteListUsers[i] != address(0) && whiteList[_whiteListUsers[i]] == false, "Invalid Address");
+            whiteList[_whiteListUsers[i]] = true;
         }
     }
      
-    function removeWhiteList(address[] memory _whiteListUsers) external onlyOwner {
+    function removeWhiteList(address[] memory _whiteListUsers) public onlyOwner {
         require(_whiteListUsers.length > 0, "Invalid Param");
         for(uint i=0; i<_whiteListUsers.length; i++) {
-            require(_whiteListUsers[i] != address(0), "Invalid Address");
-            unchecked {
-                whiteList[_whiteListUsers[i]] = false;
-            }
+            require(_whiteListUsers[i] != address(0) && whiteList[_whiteListUsers[i]] == true, "Invalid Address");
+            whiteList[_whiteListUsers[i]] = false;
         }
-    }
-    function updateGoLiveDate(uint256 _newLiveDate) external onlyOwner {
-        goLiveDate = _newLiveDate;
     }
 
     function _beforeTokenTransfer(

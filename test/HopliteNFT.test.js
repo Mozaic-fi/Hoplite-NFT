@@ -10,34 +10,26 @@ describe('HopliteNFT Contract', function () {
   let owner;
   let addr1;
   let addr2;
+  let default_receiver;
 
   beforeEach(async function () {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1, addr2, default_receiver] = await ethers.getSigners(); 
 
     const HopliteNFTFactory = await ethers.getContractFactory('HopliteNFT');
     const baseURL = "https://example.net/";
     const currentTimestamp = (await ethers.provider.getBlock()).timestamp;
     hopliteNFT = await HopliteNFTFactory.deploy(baseURL, currentTimestamp + 3600, 200000, addr1.address);
     await hopliteNFT.deployed();
-
-    await hopliteNFT.setRoyaltyHandler(addr1.address);
   });
 
   it('Should set the base URI', async function () {
     const newBaseURI = "https://new_example.net/";;
-    await hopliteNFT.setBaseURI(newBaseURI);
-    expect(await hopliteNFT.baseTokenURI()).to.equal(newBaseURI);
+    await expect(hopliteNFT.setBaseURI(newBaseURI)).to.emit(hopliteNFT, "SetBaseURI").withArgs(newBaseURI);
   });
 
-  it('Should set the royalty handler', async function () {
-    const newRoyaltyHandler = await ethers.getSigner();
-    await hopliteNFT.setRoyaltyHandler(newRoyaltyHandler.address);
-    expect(await hopliteNFT.royaltyHandler()).to.equal(newRoyaltyHandler.address);
-  });
-
-  it('Should adjust royalty', async function () {
+  it('Should set the default royalty', async function () {
     const newRoyalty = 500; // Set your desired royalty value here
-    await expect(hopliteNFT.adjustRoyalty(newRoyalty)).to.emit(hopliteNFT, "NewRoyalty").withArgs(newRoyalty);
+    await expect(hopliteNFT.setDefaultRoyalty(default_receiver.address, newRoyalty)).to.emit(hopliteNFT, "NewDefaultRoyalty").withArgs(default_receiver.address, newRoyalty);
   });
 
   it('Should update whitelist', async function () {
@@ -45,12 +37,6 @@ describe('HopliteNFT Contract', function () {
     await hopliteNFT.updateWhiteList(newWhiteList);
     expect(await hopliteNFT.whiteList(addr1.address)).to.equal(true);
     expect(await hopliteNFT.whiteList(addr2.address)).to.equal(true);
-  });
-
-  it('Should update go live date', async function () {
-    const newGoLiveDate = 987654321; // Set your desired go live date here
-    await hopliteNFT.updateGoLiveDate(newGoLiveDate);
-    expect(await hopliteNFT.goLiveDate()).to.equal(newGoLiveDate);
   });
 
   it('Should mint tokens for the owner during deployment', async function () {

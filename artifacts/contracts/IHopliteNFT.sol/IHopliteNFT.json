@@ -4,14 +4,8 @@
   "sourceName": "contracts/IHopliteNFT.sol",
   "abi": [
     {
-      "inputs": [
-        {
-          "internalType": "uint96",
-          "name": "newRoyalty",
-          "type": "uint96"
-        }
-      ],
-      "name": "adjustRoyalty",
+      "inputs": [],
+      "name": "deleteDefaultRoyalty",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -25,6 +19,19 @@
         }
       ],
       "name": "removeWhiteList",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "resetTokenRoyalty",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -46,11 +53,16 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_handler",
+          "name": "receiver",
           "type": "address"
+        },
+        {
+          "internalType": "uint96",
+          "name": "newRoyalty",
+          "type": "uint96"
         }
       ],
-      "name": "setRoyaltyHandler",
+      "name": "setDefaultRoyalty",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -59,11 +71,21 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_newLiveDate",
+          "name": "tokenId",
           "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "receiver",
+          "type": "address"
+        },
+        {
+          "internalType": "uint96",
+          "name": "newRoyalty",
+          "type": "uint96"
         }
       ],
-      "name": "updateGoLiveDate",
+      "name": "setTokenRoyalty",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
