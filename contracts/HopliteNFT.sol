@@ -21,6 +21,7 @@ contract HopliteNFT is Ownable, ONFT721, ERC2981, IHopliteNFT {
 
     // Max 10% royalty
     uint256 private constant MAX_ROYALTY = 1000;
+    uint256 private constant MAX_SUPPLY = 378;
 
     constructor (
         string memory baseURI,
@@ -31,7 +32,7 @@ contract HopliteNFT is Ownable, ONFT721, ERC2981, IHopliteNFT {
         setBaseURI(baseURI);
         goLiveDate = _goLiveDate;
         whiteList[msg.sender] = true;
-        for(uint256 i = 0; i < 377; i++) {
+        for(uint256 i = 0; i < MAX_SUPPLY; i++) {
             _mint(msg.sender, i);
         }
         whiteList[msg.sender] = false;  
